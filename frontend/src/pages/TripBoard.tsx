@@ -20,7 +20,11 @@ export default function TripBoard() {
   const [goods, setGoods] = useState('');
   const [weight, setWeight] = useState('');
   const [charges, setCharges] = useState('');
-  const [dispatchDate, setDispatchDate] = useState('');
+  const [dispatchDate, setDispatchDate] = useState(() => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    return now.toISOString().slice(0, 16);
+  });
   const [priority, setPriority] = useState('mid');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -137,8 +141,8 @@ export default function TripBoard() {
 
             <div className="form-row">
               <div className="form-group">
-                <label>Dispatch Date</label>
-                <input type="date" value={dispatchDate} onChange={e => setDispatchDate(e.target.value)} />
+                <label>Dispatch Date & Time</label>
+                <input type="datetime-local" value={dispatchDate} onChange={e => setDispatchDate(e.target.value)} />
               </div>
               <div className="form-group">
                 <label>Priority</label>

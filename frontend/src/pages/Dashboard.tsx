@@ -6,6 +6,7 @@ import {
   CheckCircle2, PlusCircle, Activity
 } from 'lucide-react';
 import API_BASE_URL from '../utils/api';
+import LiveMap, { type MapMarker } from '../components/Map/LiveMap';
 
 interface Stats {
   activeTrips: number;
@@ -45,12 +46,35 @@ const ACTIVITY_FEED = [
   { icon: <AlertTriangle size={16} />, color: 'var(--color-error)', bg: 'var(--color-error-glow)', title: 'Compliance Alert', desc: 'Permit expiring in 5 days', time: '1 hour ago' },
 ];
 
-// Static India map locations for active trips
-const MAP_MARKERS = [
-  { city: 'Delhi', x: '45%', y: '22%', count: 4, color: '#1E3A5F' },
-  { city: 'Mumbai', x: '28%', y: '55%', count: 6, color: '#F59E0B' },
-  { city: 'Bangalore', x: '38%', y: '75%', count: 3, color: '#1E3A5F' },
-  { city: 'Kolkata', x: '70%', y: '38%', count: 2, color: '#F59E0B' },
+// Static India map locations for active trips in Leaflet (with coordinates)
+const LEAFLET_MARKERS: MapMarker[] = [
+  { city: 'Delhi', position: [28.6139, 77.2090], count: 4, color: '#1E3A5F' },
+  { city: 'Mumbai', position: [19.0760, 72.8777], count: 6, color: '#F59E0B' },
+  { city: 'Bangalore', position: [12.9716, 77.5946], count: 3, color: '#1E3A5F' },
+  { city: 'Kolkata', position: [22.5726, 88.3639], count: 2, color: '#F59E0B' },
+];
+
+// Active logistics routes displayed as lines on the map
+const MAP_POLYLINES = [
+  {
+    positions: [
+      [28.6139, 77.2090], // Delhi
+      [22.3072, 73.1812], // Vadodara
+      [19.0760, 72.8777], // Mumbai
+      [15.3647, 75.1240], // Hubli
+      [12.9716, 77.5946], // Bangalore
+    ] as [number, number][],
+    color: '#3B82F6'
+  },
+  {
+    positions: [
+      [22.5726, 88.3639], // Kolkata
+      [23.3441, 85.3096], // Ranchi
+      [25.3176, 82.9739], // Varanasi
+      [28.6139, 77.2090], // Delhi
+    ] as [number, number][],
+    color: '#F59E0B'
+  }
 ];
 
 export default function Dashboard() {
@@ -82,7 +106,11 @@ export default function Dashboard() {
 
   useEffect(() => { fetchData(); }, []);
 
-  const fmt = (d: string) => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  const fmt = (d: string) => {
+    const date = new Date(d);
+    return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) + ' ' +
+           date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+  };
 
   return (
     <div>
@@ -235,76 +263,18 @@ export default function Dashboard() {
           <div 
             style={{ 
               background: mapView === 'standard' ? '#EFF6FF' : '#0B132B', 
-              backgroundImage: mapView === 'satellite' ? 'linear-gradient(rgba(11, 19, 43, 0.85), rgba(11, 19, 43, 0.85)), url("https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=1000&auto=format&fit=crop")' : undefined,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
               position: 'relative', 
               height: 300, 
               overflow: 'hidden',
-              transition: 'all 0.5s ease'
+              transition: 'all 0.5s ease',
+              borderRadius: '0 0 12px 12px'
             }}
           >
-            {/* Grid pattern */}
-            <div 
-              style={{ 
-                position: 'absolute', 
-                inset: 0, 
-                backgroundImage: mapView === 'standard' 
-                  ? 'radial-gradient(#1E3A5F22 1px, transparent 1px)' 
-                  : 'radial-gradient(#10B9811A 1px, transparent 1px)', 
-                backgroundSize: '24px 24px' 
-              }} 
+            <LiveMap 
+              markers={LEAFLET_MARKERS} 
+              polylines={MAP_POLYLINES} 
+              mapView={mapView} 
             />
-
-            {/* India SVG */}
-            <svg viewBox="0 0 200 240" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', padding: '1rem' }}>
-              <path
-                d="M70,20 L100,30 L130,20 L140,50 L160,80 L180,100 L170,140 L140,180 L100,230 L60,180 L30,140 L20,100 L40,80 L50,50 Z"
-                fill={mapView === 'standard' ? '#DBEAFE' : '#1C2E24'}
-                stroke={mapView === 'standard' ? '#93C5FD' : '#10B981'}
-                strokeWidth="0.5"
-                style={{ transition: 'all 0.5s ease' }}
-              />
-            </svg>
-
-            {/* Fleet Markers */}
-            {MAP_MARKERS.map((m) => (
-              <div key={m.city} style={{
-                position: 'absolute',
-                left: m.x, top: m.y,
-                transform: 'translate(-50%, -50%)',
-                cursor: 'pointer',
-                zIndex: 10,
-              }}>
-                <div
-                  style={{
-                    background: mapView === 'standard' ? m.color : '#1F2937',
-                    color: 'white',
-                    borderRadius: '50%',
-                    width: 28, height: 28,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    border: mapView === 'standard' ? '2px solid white' : '2px solid #10B981',
-                    boxShadow: mapView === 'standard' ? '0 2px 8px rgba(0,0,0,0.2)' : '0 0 12px rgba(16,185,129,0.5)',
-                    fontSize: '0.55rem', fontWeight: 700,
-                    transition: 'all 0.5s ease'
-                  }}
-                >
-                  <Truck size={12} color={mapView === 'standard' ? 'white' : '#10B981'} />
-                </div>
-                <div style={{
-                  position: 'absolute', top: '110%', left: '50%', transform: 'translateX(-50%)',
-                  background: mapView === 'standard' ? 'var(--color-primary)' : '#111827', 
-                  color: mapView === 'standard' ? 'white' : '#10B981',
-                  border: mapView === 'standard' ? 'none' : '1px solid #10B981',
-                  fontSize: '0.6rem', padding: '2px 6px', borderRadius: '4px',
-                  whiteSpace: 'nowrap', marginTop: '2px', fontWeight: 600,
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                  transition: 'all 0.5s ease'
-                }}>
-                  {m.city} ({m.count})
-                </div>
-              </div>
-            ))}
           </div>
         </div>
 
@@ -368,7 +338,7 @@ export default function Dashboard() {
                 <tr>
                   <th>Trip ID</th><th>Driver</th><th>Vehicle</th>
                   <th>Pickup → Destination</th><th>Cargo</th>
-                  <th>Date</th><th>Status</th><th>POD</th><th></th>
+                  <th>Date & Time</th><th>Status</th><th>POD</th><th></th>
                 </tr>
               </thead>
               <tbody>

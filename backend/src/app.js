@@ -48,6 +48,13 @@ app.use('/api/vehicles', vehiclesRouter);
 app.use('/api/trips', tripsRouter);
 app.use('/api/dashboard', dashboardRouter);
 
+app.get('/api/config/maps', (req, res) => {
+  res.json({
+    googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY,
+    nextBillionApiKey: process.env.NEXTBILLION_API_KEY,
+  });
+});
+
 // Health Check
 app.get('/health', (req, res) => {
   res.json({

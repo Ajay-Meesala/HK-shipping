@@ -16,8 +16,10 @@ export default function Trips() {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date(); d.setMonth(d.getMonth() - 1); return d.toISOString().split('T')[0];
+  });
+  const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0]);
 
   const fetchTrips = async () => {
     try {
@@ -36,8 +38,39 @@ export default function Trips() {
 
   useEffect(() => { fetchTrips(); }, [statusFilter, startDate, endDate]);
 
-  const fmt = (d: string) => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  const fmt = (d: string) => {
+    const date = new Date(d);
+    return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) + ' ' +
+           date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+  };
 
+  const exportToCSV = () => {
+    if (trips.length === 0) return;
+    const headers = ['Trip ID', 'Date', 'Driver', 'Vehicle', 'Pickup', 'Destination', 'Cargo', 'Weight', 'Status', 'Delivery Status'];
+    const csvContent = [
+      headers.join(','),
+      ...trips.map(t => [
+        `TRP-${String(t.id).padStart(4, '0')}`,
+        `"${fmt(t.created_at)}"`,
+        `"${t.driver_name || ''}"`,
+        `"${t.vehicle_number || ''}"`,
+        `"${t.pickup_location}"`,
+        `"${t.drop_location}"`,
+        `"${t.goods_type}"`,
+        `"${t.weight}"`,
+        t.status,
+        t.delivery_status
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', 'trips_export.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
@@ -76,7 +109,7 @@ export default function Trips() {
           <button className="btn btn-secondary" onClick={() => { setStatusFilter(''); setStartDate(''); setEndDate(''); }} style={{ fontSize: '0.8rem' }}>
             Clear
           </button>
-          <button className="btn btn-secondary" style={{ fontSize: '0.8rem', marginLeft: 'auto' }}>
+          <button className="btn btn-secondary" onClick={exportToCSV} style={{ fontSize: '0.8rem', marginLeft: 'auto' }}>
             <Download size={15} /> Export
           </button>
         </div>
@@ -93,7 +126,7 @@ export default function Trips() {
             <table>
               <thead>
                 <tr>
-                  <th>Trip ID</th><th>Date</th><th>Driver</th><th>Vehicle</th>
+                  <th>Trip ID</th><th>Date & Time</th><th>Driver</th><th>Vehicle</th>
                   <th>Route</th><th>Cargo / Weight</th><th>Status</th><th>POD</th><th></th>
                 </tr>
               </thead>
