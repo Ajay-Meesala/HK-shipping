@@ -104,3 +104,43 @@ INSERT INTO trip_history (trip_id, status_change, changed_at) VALUES
 (2, 'Trip Created & Assigned', '2026-06-10 15:00:00'),
 (2, 'Status changed to IN_PROGRESS', '2026-06-11 06:00:00'),
 (3, 'Trip Created & Assigned', '2026-06-12 09:00:00');
+
+-- ─────────────────────────────────────────────────────────────────────────────
+--  DUAL-ROLE ACCESS CONTROL — Additional tables (run once, idempotent)
+-- ─────────────────────────────────────────────────────────────────────────────
+
+-- user_profiles: stores role and profile info keyed by Firebase UID
+CREATE TABLE IF NOT EXISTS user_profiles (
+  uid         VARCHAR(128) PRIMARY KEY,      -- Firebase Auth UID
+  email       VARCHAR(255) UNIQUE NOT NULL,
+  display_name VARCHAR(100),
+  role        VARCHAR(20) NOT NULL DEFAULT 'customer', -- 'admin' | 'customer'
+  company     VARCHAR(100),
+  created_at  TIMESTAMP DEFAULT NOW()
+);
+
+-- bookings: customer freight booking requests
+DROP TABLE IF EXISTS bookings CASCADE;
+CREATE TABLE bookings (
+  id               SERIAL PRIMARY KEY,
+  customer_name    VARCHAR(100) NOT NULL,
+  customer_email   VARCHAR(255) NOT NULL,
+  contact_phone    VARCHAR(20)  NOT NULL,
+  origin           VARCHAR(255) NOT NULL,
+  destination      VARCHAR(255) NOT NULL,
+  goods_type       VARCHAR(100) NOT NULL,
+  weight           VARCHAR(50)  NOT NULL,
+  preferred_date   DATE,
+  notes            TEXT,
+  status           VARCHAR(30) DEFAULT 'pending', -- pending/confirmed/dispatched/in_transit/delivered/cancelled
+  created_at       TIMESTAMP DEFAULT NOW(),
+  updated_at       TIMESTAMP DEFAULT NOW()
+);
+
+-- Seed sample bookings for demo
+INSERT INTO bookings (customer_name, customer_email, contact_phone, origin, destination, goods_type, weight, preferred_date, notes, status, created_at) VALUES
+('Rahul Mehta',     'rahul@acmecorp.com',   '9876500001', 'Mumbai',    'Delhi',     'Electronic Components', '5 Tons',  '2026-07-05', 'Fragile items — handle with care', 'in_transit', '2026-06-20 09:00:00'),
+('Priya Industries','priya@priyaind.com',   '9876500002', 'Pune',      'Bangalore', 'Auto Parts',           '12 Tons', '2026-07-10', NULL,                              'confirmed',  '2026-06-22 11:30:00'),
+('Anil Traders',    'anil@aniltraders.com', '9876500003', 'Chennai',   'Hyderabad', 'Textiles',              '8 Tons',  '2026-07-15', 'Delivery before 10AM preferred', 'pending',    '2026-06-25 14:00:00'),
+('Sharma Exports',  'sharma@sharmaexp.com', '9876500004', 'Kolkata',   'Mumbai',    'Raw Materials',         '20 Tons', '2026-07-20', NULL,                              'delivered',  '2026-06-18 08:00:00');
+

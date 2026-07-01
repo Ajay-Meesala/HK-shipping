@@ -25,9 +25,11 @@ export const bucket = getStorage().bucket();
 
 // Firestore collection references — single source of truth for collection names
 export const COLLECTIONS = {
+  USERS:        'users',
   DRIVERS:      'drivers',
   VEHICLES:     'vehicles',
   TRIPS:        'trips',
   TRIP_HISTORY: 'trip_history',
   POD:          'pod',
+  BOOKINGS:     'bookings',
 };

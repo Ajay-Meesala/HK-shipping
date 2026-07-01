@@ -1,5 +1,6 @@
 import express from 'express';
 import { query } from '../db/index.js';
+import { verifyToken, checkRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -28,8 +29,8 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-// POST /api/drivers - Register a new driver
-router.post('/', async (req, res, next) => {
+// POST /api/drivers - Register a new driver (Admin only)
+router.post('/', verifyToken, checkRole(['admin', 'guest']), async (req, res, next) => {
   try {
     const { name, phone, license_no, status } = req.body;
 

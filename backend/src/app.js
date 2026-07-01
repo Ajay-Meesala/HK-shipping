@@ -10,6 +10,7 @@ import driversRouter from './routes/drivers.js';
 import vehiclesRouter from './routes/vehicles.js';
 import tripsRouter from './routes/trips.js';
 import dashboardRouter from './routes/dashboard.js';
+import bookingsRouter from './routes/bookings.js';
 
 dotenv.config();
 
@@ -47,6 +48,7 @@ app.use('/api/drivers', driversRouter);
 app.use('/api/vehicles', vehiclesRouter);
 app.use('/api/trips', tripsRouter);
 app.use('/api/dashboard', dashboardRouter);
+app.use('/api/bookings', bookingsRouter);
 
 app.get('/api/config/maps', (req, res) => {
   res.json({

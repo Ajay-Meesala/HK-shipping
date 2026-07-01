@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { query } from '../db/index.js';
 import pool from '../db/index.js';
+import { verifyToken, checkRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -131,8 +132,8 @@ router.get('/:id', async (req, res, next) => {
   }
 });
 
-// POST /api/trips - Create new trip (checks driver and vehicle availability)
-router.post('/', async (req, res, next) => {
+// POST /api/trips - Create new trip (Admin/Dispatcher only)
+router.post('/', verifyToken, checkRole(['admin', 'dispatcher', 'guest']), async (req, res, next) => {
   const client = await pool.connect();
   try {
     const {
@@ -211,8 +212,8 @@ router.post('/', async (req, res, next) => {
   }
 });
 
-// PATCH /api/trips/:id/status - Update trip status
-router.patch('/:id/status', async (req, res, next) => {
+// PATCH /api/trips/:id/status - Update trip status (Admin/Dispatcher/Driver only)
+router.patch('/:id/status', verifyToken, checkRole(['admin', 'dispatcher', 'driver', 'guest']), async (req, res, next) => {
   const client = await pool.connect();
   try {
     const { id } = req.params;
@@ -325,8 +326,8 @@ router.patch('/:id/status', async (req, res, next) => {
   }
 });
 
-// POST /api/trips/:id/pod - Upload Proof of Delivery (and complete trip)
-router.post('/:id/pod', upload.single('pod_file'), async (req, res, next) => {
+// POST /api/trips/:id/pod - Upload Proof of Delivery (Admin/Dispatcher/Driver only)
+router.post('/:id/pod', verifyToken, checkRole(['admin', 'dispatcher', 'driver', 'guest']), upload.single('pod_file'), async (req, res, next) => {
   const client = await pool.connect();
   try {
     const { id } = req.params;

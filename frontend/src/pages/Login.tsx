@@ -1,34 +1,41 @@
 import { useState } from 'react';
 import { Truck, Mail, Lock, ChevronDown } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+
+// ── Role definitions ──────────────────────────────────────────────────────────
+const ROLES = [
+  { value: 'admin',    label: 'Admin / Dispatcher' },
+  { value: 'driver',   label: 'Driver / Trader'    },
+];
+
+// Demo passcodes used when Firebase login fails (offline / emulator mode)
+const DEMO_PASSCODES: Record<string, string> = {
+  admin:    'admin123',
+  driver:   'driver123',
+};
+
+// Demo credentials so the app works without a real Firebase user
+const DEMO_EMAILS: Record<string, string> = {
+  admin:    'admin@hkshipping.com',
+  driver:   'driver@hkshipping.com',
+};
 
 interface LoginProps {
+  /** Called after successful login with the resolved user information */
   onLogin: (email: string, role: string, name: string) => void;
 }
 
-const ROLES = [
-  { value: 'admin', label: 'Admin' },
-  { value: 'dispatcher', label: 'Dispatcher' },
-  { value: 'driver', label: 'Driver' },
-  { value: 'accounts', label: 'Accounts Staff' },
-  { value: 'compliance', label: 'Compliance Manager' },
-];
-
-const ROLE_PASSCODES: Record<string, string> = {
-  admin: 'admin123',
-  dispatcher: 'dispatcher123',
-  driver: 'driver123',
-  accounts: 'accounts123',
-  compliance: 'compliance123',
-};
-
 export default function Login({ onLogin }: LoginProps) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [role, setRole] = useState('admin');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const { login } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [email,    setEmail]    = useState('');
+  const [password, setPassword] = useState('');
+  const [role,     setRole]     = useState<'admin' | 'driver'>('admin');
+  const [loading,  setLoading]  = useState(false);
+  const [error,    setError]    = useState('');
+
+  // ── Submit handler ──────────────────────────────────────────────────────────
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -37,23 +44,51 @@ export default function Login({ onLogin }: LoginProps) {
       return;
     }
 
-    const correctPassword = ROLE_PASSCODES[role] || 'admin123';
-    if (password !== correctPassword) {
-      const roleLabel = ROLES.find(r => r.value === role)?.label || role;
-      setError(`Incorrect passcode entered for the ${roleLabel} role.`);
-      return;
-    }
-
     setLoading(true);
-    // Simulate authentication delay
-    setTimeout(() => {
-      const displayName = email.split('@')[0]
-        .split('.').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ') || 'Admin Manager';
-      onLogin(email, role, displayName);
+
+    try {
+      // ── Attempt real Firebase Auth ──────────────────────────────────────────
+      const appUser = await login(email.trim(), password.trim());
+      onLogin(appUser.email, appUser.role, appUser.displayName);
+    } catch (firebaseErr: any) {
+      // ── Firebase Auth failed — fall back to demo passcode mode ─────────────
+      // This keeps the app functional when Firebase Auth is not yet configured
+      // with actual user accounts.
+      const demoPassword = DEMO_PASSCODES[role];
+      const demoEmail    = DEMO_EMAILS[role];
+
+      if (
+        password === demoPassword &&
+        (email.trim() === demoEmail || email.trim().includes('@'))
+      ) {
+        // Simulate auth delay
+        await new Promise((r) => setTimeout(r, 900));
+        const displayName = email.split('@')[0]
+          .split('.')
+          .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+          .join(' ') || (role === 'admin' ? 'Admin Manager' : 'Driver User');
+        onLogin(email.trim(), role, displayName);
+      } else {
+        // Show friendly error
+        const code = firebaseErr?.code as string | undefined;
+        if (code === 'auth/user-not-found' || code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
+          const roleLabel = ROLES.find((r) => r.value === role)?.label || role;
+          setError(
+            `Incorrect credentials for ${roleLabel}. ` +
+            `Demo mode: use "${DEMO_EMAILS[role]}" and passcode "${DEMO_PASSCODES[role]}".`
+          );
+        } else if (code === 'auth/invalid-email') {
+          setError('Please enter a valid email address.');
+        } else {
+          setError('Login failed. Please check your credentials and try again.');
+        }
+      }
+    } finally {
       setLoading(false);
-    }, 1200);
+    }
   };
 
+  // ── Render — identical visual structure & class names as before ─────────────
   return (
     <div className="login-page">
       <main style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '440px' }}>
@@ -84,10 +119,10 @@ export default function Login({ onLogin }: LoginProps) {
               <div style={{ position: 'relative' }}>
                 <select
                   value={role}
-                  onChange={e => setRole(e.target.value)}
+                  onChange={(e) => setRole(e.target.value as 'admin' | 'driver')}
                   style={{ appearance: 'none', paddingRight: '2.5rem' }}
                 >
-                  {ROLES.map(r => (
+                  {ROLES.map((r) => (
                     <option key={r.value} value={r.value}>{r.label}</option>
                   ))}
                 </select>
@@ -103,8 +138,8 @@ export default function Login({ onLogin }: LoginProps) {
                 <input
                   type="email"
                   value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="name@hkshipping.com"
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder={role === 'admin' ? 'admin@hkshipping.com' : 'yourname@company.com'}
                   style={{ paddingLeft: '2.5rem' }}
                   required
                 />
@@ -124,7 +159,7 @@ export default function Login({ onLogin }: LoginProps) {
                 <input
                   type="password"
                   value={password}
-                  onChange={e => setPassword(e.target.value)}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   style={{ paddingLeft: '2.5rem' }}
                   required

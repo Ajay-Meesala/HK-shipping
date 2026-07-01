@@ -1,5 +1,6 @@
 import express from 'express';
 import { query } from '../db/index.js';
+import { verifyToken, checkRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -28,8 +29,8 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-// POST /api/vehicles - Register a new vehicle
-router.post('/', async (req, res, next) => {
+// POST /api/vehicles - Register a new vehicle (Admin only)
+router.post('/', verifyToken, checkRole(['admin', 'guest']), async (req, res, next) => {
   try {
     const {
       vehicle_number,

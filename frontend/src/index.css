@@ -858,3 +858,136 @@ input:focus, select:focus, textarea:focus {
   }
 }
 
+/* ───────────────────────────────────────────
+   CUSTOMER PORTAL — COLOR TOKENS
+─────────────────────────────────────────── */
+:root {
+  --color-customer:      #0EA5E9;
+  --color-customer-glow: rgba(14, 165, 233, 0.12);
+  --color-orange:        #F97316;
+  --color-orange-glow:   rgba(249, 115, 22, 0.12);
+  --color-violet:        #8B5CF6;
+  --color-violet-glow:   rgba(139, 92, 246, 0.12);
+  --color-teal:          #14B8A6;
+  --color-teal-glow:     rgba(20, 184, 166, 0.12);
+}
+
+/* ───────────────────────────────────────────
+   CONSIGNMENT TRACKING TIMELINE
+─────────────────────────────────────────── */
+.timeline-step {
+  display: flex;
+  gap: 0.875rem;
+  align-items: flex-start;
+  min-height: 52px;
+}
+
+.timeline-dot-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  width: 24px;
+}
+
+.timeline-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.timeline-dot.done {
+  background: var(--color-success);
+  border-color: var(--color-success);
+  color: white;
+}
+
+.timeline-dot.current {
+  background: var(--color-amber);
+  border-color: var(--color-amber);
+  color: white;
+  box-shadow: 0 0 0 4px var(--color-amber-glow);
+  animation: pulse-ring 2s ease infinite;
+}
+
+.timeline-dot.pending {
+  background: var(--bg-surface-container);
+  border-color: var(--border-color);
+  color: var(--text-muted);
+}
+
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0   var(--color-amber-glow); }
+  70%  { box-shadow: 0 0 0 6px transparent; }
+  100% { box-shadow: 0 0 0 0   transparent; }
+}
+
+.timeline-connector {
+  width: 2px;
+  flex: 1;
+  min-height: 24px;
+  background: var(--border-color);
+  border-radius: 1px;
+  margin: 3px 0;
+  transition: background 0.3s ease;
+}
+
+.timeline-connector.done {
+  background: var(--color-success);
+}
+
+.timeline-label {
+  padding-bottom: 1.25rem;
+  flex: 1;
+  min-width: 0;
+}
+
+/* ───────────────────────────────────────────
+   CUSTOMER BOOKING FORM CARD
+─────────────────────────────────────────── */
+.booking-form-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.booking-form-card textarea {
+  font-size: 0.85rem;
+  resize: none;
+}
+
+/* ───────────────────────────────────────────
+   STAT ICON VARIANTS FOR CUSTOMER PORTAL
+─────────────────────────────────────────── */
+.stat-icon.success {
+  background: var(--color-success-glow);
+  color: var(--color-success);
+}
+
+.stat-icon.orange {
+  background: var(--color-orange-glow);
+  color: var(--color-orange);
+}
+
+.stat-icon.violet {
+  background: var(--color-violet-glow);
+  color: var(--color-violet);
+}
+
+/* ───────────────────────────────────────────
+   CUSTOMER PORTAL RESPONSIVE
+─────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .timeline-step {
+    min-height: 44px;
+  }
+  .timeline-label {
+    padding-bottom: 1rem;
+  }
+}
