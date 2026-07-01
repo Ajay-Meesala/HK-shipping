@@ -35,7 +35,6 @@ import { useAuth } from './context/AuthContext';
 const ROLE_LABELS: Record<string, string> = {
   admin:      'Admin',
   dispatcher: 'Dispatcher',
-  driver:     'Driver',
   accounts:   'Accounts Staff',
   compliance: 'Compliance Manager',
   driver:     'Driver / Trader',

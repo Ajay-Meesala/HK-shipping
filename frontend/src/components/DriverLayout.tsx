@@ -4,7 +4,6 @@ import {
   Truck,
   LayoutDashboard,
   ClipboardList,
-  Search,
   Compass,
   LogOut,
   Menu,
@@ -13,11 +12,6 @@ import {
   MapPin,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-
-interface DriverLayoutProps {
-  onLogout: () => void;
-  children: React.ReactNode;
-}
 
 export default function DriverLayout({ children, onLogout }: { children: React.ReactNode; onLogout: () => void }) {
   const { user } = useAuth();
